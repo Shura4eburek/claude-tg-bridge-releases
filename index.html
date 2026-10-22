@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <!-- interactive-widget=resizes-content — WebView сжимает страницу под клавиатурой:
+       без этого Android рисует клавиатуру поверх, и поле ввода уезжает под неё (#46). -->
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, interactive-widget=resizes-content" />
+  <title>claude-tg-bridge</title>
+  <script data-role="version-guard">
+    // 018: по общему домену отвечают все машины владельца; машина другой версии отвечает 409 на
+    // чужой ?v=, и стиль или модуль не грузится. Перезагрузка попадает на машину нашей версии —
+    // не чаще раза в 10 с, иначе при одной машине другой версии страница перезагружалась бы без конца.
+    window.addEventListener('error', (e) => {
+      const t = e.target;
+      if (!t || (t.tagName !== 'SCRIPT' && t.tagName !== 'LINK')) return;
+      // Только свои файлы: недоступный telegram.org версией не лечится.
+      try { if (new URL(t.src || t.href, window.location.href).origin !== window.location.origin) return; } catch { return; }
+      try {
+        const last = Number(window.sessionStorage.getItem('ctb-version-reload')) || 0;
+        if (Date.now() - last < 10000) return;
+        window.sessionStorage.setItem('ctb-version-reload', String(Date.now()));
+      } catch { return; }
+      window.location.reload();
+    }, true);
+  </script>
+  <script data-role="safe-override">
+    // ?__safe=t,r,b,l (стенд телефона, dev/stand.html) — отступы до первой отрисовки; логика
+    // та же, что в js/safe-area-override.js (parseSafe). Нет параметра или мусор — ничего.
+    (function () {
+      try {
+        var raw = new URLSearchParams(window.location.search).get('__safe');
+        if (!raw) return;
+        var parts = raw.split(',');
+        if (parts.length !== 4) return;
+        var px = [];
+        for (var i = 0; i < 4; i++) {
+          var n = parts[i].trim() === '' ? NaN : Number(parts[i]);
+          if (!isFinite(n)) return;
+          px.push(Math.min(120, Math.max(0, n)) + 'px');
+        }
+        var st = document.documentElement.style;
+        ['t', 'r', 'b', 'l'].forEach(function (s, k) { st.setProperty('--sa-ov-' + s, px[k]); });
+      } catch (e) { /* без override обойдёмся */ }
+    })();
+  </script>
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+  <!-- ?v= обязателен при каждой правке: WebView Telegram кеширует файлы и по прежнему
+       адресу к серверу не идёт. Версия та же, что в импортах js/*.js. -->
+  <link rel="stylesheet" href="tokens.css?v=238" />
+  <link rel="stylesheet" href="bundle.css?v=238" />
+  <link rel="stylesheet" href="app.css?v=238" />
+  <script src="bundle.js?v=238"></script>
+  <!-- Вне Telegram — устанавливаемое приложение (016): манифест, иконка для iOS, цвет полосы. -->
+  <link rel="manifest" href="manifest.webmanifest?v=238" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png?v=238" />
+  <meta name="theme-color" content="#131417" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <script>
+    // Окно установки Android Chrome предлагает один раз и рано — ловим до загрузки модулей.
+    window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); window.__installPrompt = e; });
+    window.addEventListener('appinstalled', () => { window.__installPrompt = null; });
+  </script>
+</head>
+<body class="tb">
+  <main id="app"></main>
+  <script type="module">
+    import { createApp } from './js/app.js?v=238';
+    // Высота окна — по visualViewport: клавиатура сжимает ленту, а не прячет поле ввода.
+    // Клавиатура — окно заметно ниже самого высокого при той же ширине (поворот — другая ширина).
+    const tallest = {};
+    const setVh = () => {
+      const h = window.visualViewport?.height ?? window.innerHeight;
+      const w = window.innerWidth;
+      tallest[w] = Math.max(tallest[w] ?? 0, h);
+      document.documentElement.style.setProperty('--vh', `${h}px`);
+      document.documentElement.classList.toggle('kb', h < tallest[w] - 150);
+    };
+    setVh();
+    window.visualViewport?.addEventListener('resize', setVh);
+    // iOS с клавиатурой сдвигает страницу вверх, чтобы показать поле: шапка чата уезжала под
+    // полупрозрачную полосу Telegram (живая проверка 1.3.1). Окно и так по высоте видимой части —
+    // сдвиг не нужен, возвращаем.
+    window.visualViewport?.addEventListener('scroll', () => { if (window.scrollY > 0) window.scrollTo(0, 0); });
+    // iOS не сообщает о закрытии клавиатуры, если поле ввода убрали со страницы (вставили ссылку —
+    // и экран сменился): высота оставалась «с клавиатурой», нижняя панель — поднятой (живая
+    // проверка 016). Поле потеряло фокус — меряем заново, когда клавиатура уже уехала.
+    document.addEventListener('focusout', () => setTimeout(() => { setVh(); window.scrollTo(0, 0); }, 300));
+    const tg = window.Telegram?.WebApp;
+    const app = createApp({
+      root: document.getElementById('app'),
+      tg,
+      fetch: window.fetch.bind(window),
+      storage: window.localStorage,
+      location: window.location,
+      TgBridge: window.TgBridge,
+      secure: window.isSecureContext,
+      install: {
+        prompt: () => window.__installPrompt ?? null,
+        standalone: () => window.matchMedia?.('(display-mode: standalone)').matches || navigator.standalone === true,
+        ios: () => /iPhone|iPad/.test(navigator.userAgent) || (/Macintosh/.test(navigator.userAgent) && navigator.maxTouchPoints > 1),
+      },
+    });
+    void app.start();
+    // Офлайн-оболочка — только вне Telegram (там свой кеш WebView) и только в secure context:
+    // по http (ZeroTier) браузер служебного работника не пустит.
+    if (!tg?.initData && window.isSecureContext && 'serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(() => {});
+    }
+    setInterval(() => app.tick(), 1000);
+  </script>
+</body>
+</html>

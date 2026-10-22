@@ -1,0 +1,15 @@
+{
+  "name": "claude-tg-bridge",
+  "short_name": "Мост",
+  "description": "Сессии Claude Code на компьютере — с телефона",
+  "lang": "ru",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#131417",
+  "theme_color": "#131417",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

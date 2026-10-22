@@ -1,0 +1,453 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+/* TgBridge — Telegram Mini App моста claude-tg-bridge. Родственник Shirabe: те же имена токенов, формы статусов и иконки.
+   Только касания: состояния — default / :active (.is-pressed) / disabled / focus-visible / busy. Hover нет.
+   color-mix() не используется нигде: производные цвета Telegram-темы считает bundle.js. */
+
+/* ── Telegram live theme: значения tg-light / tg-dark остаются запасными ─────────── */
+html.tg-live {
+  --bg\.base: var(--tg-theme-secondary-bg-color, #eff1f4);
+  --bg\.surface-1: var(--tg-theme-section-bg-color, var(--tg-theme-bg-color, #ffffff));
+  --bg\.surface-3: var(--tg-theme-bg-color, #ffffff);
+  --text\.primary: var(--tg-theme-text-color, #0f1419);
+  --text\.link: var(--tg-theme-link-color, #1f5fc8);
+  --accent\.default: var(--tg-theme-button-color, #2f6ae0);
+  --text\.on-accent: var(--tg-theme-button-text-color, #ffffff);
+  --accent\.text: var(--tg-theme-accent-text-color, var(--tg-theme-link-color, #1f5fc8));
+  --border\.subtle: var(--tg-theme-section-separator-color, #e6e8eb);
+}
+/* hint-color берём, только если bundle.js проверил контраст ≥ 4.5:1 и поставил .tg-hint-ok */
+html.tg-live.tg-hint-ok { --text\.secondary: var(--tg-theme-hint-color); }
+
+/* ── base ─────────────────────────────────────────────────────────────── */
+.tb { font: 400 15px/21px var(--font-ui); color: var(--text\.primary); background: var(--bg\.base); -webkit-font-smoothing: antialiased; font-feature-settings: "tnum" 1, "cv11" 1; -webkit-tap-highlight-color: transparent; }
+.tb *, .tb *::before, .tb *::after { box-sizing: border-box; }
+:where(.tb) button { font: inherit; color: inherit; background: none; border: 0; padding: 0; margin: 0; cursor: pointer; }
+.tb-i { width: var(--size\.icon); height: var(--size\.icon); flex: none; fill: none; stroke: currentColor; stroke-width: 1.2; stroke-linecap: round; stroke-linejoin: round; display: inline-block; vertical-align: middle; }
+.tb-i .f { fill: currentColor; stroke: none; }
+.tb-i.sm { width: var(--size\.icon-sm); height: var(--size\.icon-sm); stroke-width: 1.35; }
+.tb-mark { flex: none; display: inline-block; vertical-align: middle; }
+.tb-muted { color: var(--text\.secondary); }
+.tb-mono { font: 400 13px/19px var(--font-mono); }
+.tb-sp { flex: 1; min-width: 0; }
+.tb-ell { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.tb-row { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tb-col { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.tb-small { font-size: 13px; line-height: 18px; }
+.tb-cap { font: 500 12px/16px var(--font-ui); }
+.tb-ok { color: var(--status\.success); } .tb-err { color: var(--status\.error); } .tb-warn { color: var(--status\.warning); } .tb-acc { color: var(--accent\.text); }
+.tb-link { color: var(--text\.link); font-weight: 500; }
+.tb :focus-visible, .tb .is-focus { outline: 2px solid var(--border\.focus); outline-offset: 2px; }
+.tb-vh { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+
+/* spinner & dots — единственные «живые» элементы кроме пульса работающей сессии */
+.tb-spin { width: 14px; height: 14px; flex: none; border-radius: 50%; border: 2px solid var(--bg\.pressed); border-top-color: var(--accent\.text); display: inline-block; animation: tb-rot .8s linear infinite; }
+.tb-spin.on-accent { border-color: rgba(255, 255, 255, .35); border-top-color: var(--text\.on-accent); }
+.tb-dots { display: inline-flex; gap: 3px; align-items: center; }
+.tb-dots i { width: 4px; height: 4px; border-radius: 50%; background: currentColor; animation: tb-blink 1.1s infinite; }
+.tb-dots i:nth-child(2) { animation-delay: .18s; } .tb-dots i:nth-child(3) { animation-delay: .36s; }
+@keyframes tb-rot { to { transform: rotate(360deg); } }
+@keyframes tb-blink { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+@keyframes tb-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.35); } }
+@media (prefers-reduced-motion: reduce) { .tb *, .tb *::before, .tb *::after { animation: none !important; } }
+
+/* ── preview-only frame: phone + Telegram header (рисует сам Telegram) ───── */
+.tb-phone { width: 375px; height: 760px; flex: none; display: flex; flex-direction: column; overflow: hidden; border-radius: 22px; background: var(--bg\.base); border: 1px solid var(--border\.default); position: relative; }
+.tb-tgbar { height: 52px; flex: none; display: flex; align-items: center; gap: 8px; padding: 0 8px 0 4px; background: var(--bg\.surface-1); border-bottom: 1px solid var(--border\.subtle); }
+.tb-tgbar .bk { width: 44px; height: 44px; display: grid; place-items: center; color: var(--text\.link); }
+.tb-tgbar .t { flex: 1; min-width: 0; text-align: center; }
+.tb-tgbar .t b { display: block; font: 600 15px/19px var(--font-ui); }
+.tb-tgbar .t small { display: block; font: 400 12px/15px var(--font-ui); color: var(--text\.secondary); }
+.tb-scr { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; position: relative; }
+.tb-pad { padding: 12px; }
+.tb-board { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; }
+.tb-board > figure { margin: 0; display: flex; flex-direction: column; gap: 8px; }
+.tb-board > figure > figcaption { font: 600 12px/16px var(--font-ui); color: var(--text\.secondary); }
+.tb-doc { padding: 20px; display: flex; flex-direction: column; gap: 28px; background: var(--bg\.base); min-height: 100vh; }
+.tb-doc-h { font: 600 13px/18px var(--font-ui); color: var(--text\.secondary); margin-bottom: -16px; }
+.tb-pair { display: flex; gap: 16px; }
+.tb-swatch { padding: 14px; border-radius: var(--radius\.lg); background: var(--bg\.base); border: 1px solid var(--border\.default); }
+
+/* ── screen header ──────────────────────────────────────────────────── */
+.tb-head { display: flex; align-items: center; gap: 8px; padding: 14px 12px 10px; }
+.tb-head h1 { margin: 0; font: 600 22px/28px var(--font-ui); flex: 1; min-width: 0; }
+.tb-section-h { padding: 14px 16px 6px; font: 500 13px/18px var(--font-ui); color: var(--text\.secondary); }
+
+/* ── Button ─────────────────────────────────────────────────────────── */
+.tb-btn { height: var(--size\.control); min-width: 44px; padding: 0 14px; border-radius: var(--radius\.md); display: inline-flex; align-items: center; justify-content: center; gap: 6px; font: 500 15px/20px var(--font-ui); color: var(--text\.primary); background: transparent; border: 1px solid var(--border\.control); white-space: nowrap; position: relative; }
+.tb-btn:active, .tb-btn.is-pressed { background: var(--bg\.pressed); }
+.tb-btn--primary { background: var(--accent\.default); border-color: var(--accent\.default); color: var(--text\.on-accent); }
+.tb-btn--primary:active, .tb-btn--primary.is-pressed { background: var(--accent\.pressed); }
+.tb-btn--ghost { border-color: transparent; color: var(--text\.link); padding: 0 10px; }
+.tb-btn--danger { color: var(--status\.error); border-color: var(--status\.error); }
+.tb-btn--lg { height: var(--size\.control-lg); font-size: 16px; }
+.tb-btn--block { width: 100%; }
+.tb-btn--icon { width: 44px; padding: 0; border-color: transparent; color: var(--text\.secondary); }
+.tb-btn--sm { height: 32px; padding: 0 10px; font-size: 14px; }
+.tb-btn--sm::after { content: ""; position: absolute; inset: -6px 0; }
+.tb-btn.is-disabled, .tb-btn:disabled { color: var(--text\.disabled); background: var(--bg\.disabled); border-color: var(--border\.default); pointer-events: none; }
+.tb-btn.is-busy { pointer-events: none; }
+
+/* ── StatusDot (формы Shirabe) & chip ──────────────────────────────── */
+.tb-st { width: var(--size\.dot); height: var(--size\.dot); flex: none; position: relative; display: inline-block; }
+.tb-st::before { content: ""; position: absolute; }
+.tb-st--run::before { inset: 1px; border-radius: 50%; background: var(--status\.running); box-shadow: 0 0 0 2.5px var(--status\.running-bg); }
+.tb-st--run.is-live::before { animation: tb-pulse 1.6s ease-in-out infinite; }
+.tb-st--wait::before { inset: 1px; border-radius: 50%; border: 2px solid var(--status\.waiting); }
+.tb-st--ask::before { inset: 1.5px; background: var(--status\.approval); transform: rotate(45deg); border-radius: 1px; }
+.tb-st--err::before { inset: 0; background: var(--status\.error); clip-path: polygon(50% 4%, 98% 92%, 2% 92%); }
+.tb-chip { height: 24px; padding: 0 8px 0 7px; border-radius: var(--radius\.full); display: inline-flex; align-items: center; gap: 6px; font: 500 12px/16px var(--font-ui); white-space: nowrap; flex: none; }
+.tb-chip--run { background: var(--status\.running-bg); color: var(--status\.running); }
+.tb-chip--wait { background: var(--status\.waiting-bg); color: var(--status\.waiting); }
+.tb-chip--ask { background: var(--status\.approval-bg); color: var(--status\.approval); }
+.tb-chip--err { background: var(--status\.error-bg); color: var(--status\.error); }
+.tb-chip--plain { background: var(--bg\.surface-2); color: var(--text\.secondary); }
+
+/* ── LimitBadge (Shirabe .o-limit, крупнее) ─────────────────────────── */
+.tb-limit { height: 22px; display: inline-flex; align-items: center; gap: 6px; padding: 0 7px; border-radius: var(--radius\.xs); background: var(--bg\.surface-2); font: 500 12px/16px var(--font-ui); color: var(--text\.secondary); white-space: nowrap; flex: none; }
+.tb-limit b { font-weight: 600; color: var(--text\.primary); }
+.tb-limit i { width: 28px; height: 4px; border-radius: 2px; background: var(--bg\.pressed); position: relative; overflow: hidden; display: inline-block; }
+.tb-limit i::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--v, 0%); background: var(--accent\.default); border-radius: 2px; }
+.tb-limit--warn b { color: var(--status\.warning); } .tb-limit--warn i::after { background: var(--status\.warning); }
+.tb-limit--error b { color: var(--status\.error); } .tb-limit--error i::after { background: var(--status\.error); }
+.tb-acct { display: inline-flex; align-items: center; gap: 6px; font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); min-width: 0; }
+.tb-acct .tb-i { width: 16px; height: 16px; }
+
+/* ── MachineTabs ───────────────────────────────────────────────────── */
+.tb-mtabs { display: flex; gap: 6px; padding: 4px 12px 8px; overflow: hidden; }
+.tb-mtab { height: 40px; padding: 0 12px 0 10px; border-radius: var(--radius\.full); display: inline-flex; align-items: center; gap: 8px; background: transparent; border: 1px solid var(--border\.default); font: 500 14px/18px var(--font-ui); color: var(--text\.primary); white-space: nowrap; }
+.tb-mtab small { font: 400 12px/16px var(--font-ui); color: var(--text\.secondary); }
+.tb-mtab .n { min-width: 20px; height: 20px; padding: 0 6px; border-radius: 10px; background: var(--bg\.surface-2); font: 500 12px/20px var(--font-ui); text-align: center; color: var(--text\.secondary); }
+.tb-mtab.is-active { background: var(--bg\.surface-1); border-color: var(--accent\.text); box-shadow: inset 0 0 0 1px var(--accent\.text); }
+.tb-mtab.is-active .n { background: var(--accent\.default); color: var(--text\.on-accent); }
+.tb-mtab:active { background: var(--bg\.pressed); }
+.tb-mtab.is-off { color: var(--text\.secondary); }
+
+/* ── SessionCard ───────────────────────────────────────────────────── */
+.tb-list { display: flex; flex-direction: column; gap: 8px; padding: 0 12px 12px; }
+.tb-scard { background: var(--bg\.surface-1); border-radius: var(--radius\.lg); box-shadow: var(--shadow\.card); padding: 12px; display: flex; flex-direction: column; gap: 6px; position: relative; }
+.tb-scard:active, .tb-scard.is-pressed { background: var(--bg\.pressed); }
+.tb-scard .r1 { display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tb-scard .nm { font: 600 15px/20px var(--font-ui); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-scard .tm { font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); flex: none; }
+.tb-scard .proj { font: 400 12px/17px var(--font-mono); color: var(--text\.secondary); display: flex; align-items: center; gap: 6px; min-width: 0; }
+.tb-scard .proj .tb-i { width: 14px; height: 14px; }
+.tb-scard .pv { font: 400 14px/19px var(--font-ui); color: var(--text\.secondary); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.tb-scard .pv b { color: var(--text\.primary); font-weight: 500; }
+.tb-scard .pv code { font: 400 13px/19px var(--font-mono); color: var(--text\.primary); }
+.tb-scard .r3 { display: flex; align-items: center; gap: 8px; margin-top: 2px; min-width: 0; }
+.tb-scard.is-ask { box-shadow: inset 0 0 0 1.5px var(--status\.approval); }
+
+/* ── skeleton & empty & banner ─────────────────────────────────────── */
+.tb-skel { background: var(--bg\.surface-2); border-radius: var(--radius\.xs); height: 12px; }
+.tb-scard.is-skel { gap: 10px; }
+.tb-empty { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 6px; padding: 32px 24px; }
+.tb-empty > .tb-i { width: 24px; height: 24px; color: var(--text\.disabled); margin-bottom: 4px; stroke-width: 1.1; }
+.tb-empty .t { font: 500 15px/20px var(--font-ui); }
+.tb-empty .d { font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); max-width: 280px; }
+.tb-empty .d code { font: 400 12px/17px var(--font-mono); color: var(--text\.primary); background: var(--bg\.surface-2); padding: 1px 5px; border-radius: var(--radius\.xs); }
+.tb-empty .a { margin-top: 10px; }
+.tb-banner { margin: 0 12px 8px; padding: 10px 12px; border-radius: var(--radius\.lg); display: flex; gap: 10px; align-items: flex-start; background: var(--status\.error-bg); color: var(--text\.primary); font: 400 14px/19px var(--font-ui); }
+.tb-banner > .tb-i { color: var(--status\.error); margin-top: 0; }
+.tb-banner b { display: block; font-weight: 600; color: var(--status\.error); }
+.tb-banner .tb-link { display: inline-block; margin-top: 4px; }
+.tb-banner--warn { background: var(--status\.approval-bg); }
+.tb-banner--warn > .tb-i, .tb-banner--warn b { color: var(--status\.approval); }
+.tb-strip { flex: none; height: 32px; display: flex; align-items: center; justify-content: center; gap: 8px; background: var(--status\.error-bg); color: var(--status\.error); font: 500 13px/18px var(--font-ui); }
+
+/* ── ProjectRow & launch ───────────────────────────────────────────── */
+.tb-group { background: var(--bg\.surface-1); border-radius: var(--radius\.lg); margin: 0 12px; overflow: hidden; box-shadow: var(--shadow\.card); }
+.tb-prow { min-height: 60px; padding: 10px 12px; display: flex; align-items: center; gap: 12px; box-shadow: inset 0 -1px 0 var(--border\.subtle); }
+.tb-prow:last-child { box-shadow: none; }
+.tb-prow:active { background: var(--bg\.pressed); }
+.tb-prow > .tb-i { color: var(--text\.secondary); }
+.tb-prow .nm { font: 500 15px/20px var(--font-ui); }
+.tb-prow .ph { font: 400 12px/17px var(--font-mono); color: var(--text\.secondary); }
+.tb-prow .tm { font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); flex: none; }
+.tb-prow .tb-btn { flex: none; }
+.tb-steps { display: flex; flex-direction: column; gap: 10px; }
+.tb-steps > div { display: flex; align-items: center; gap: 10px; font: 400 14px/19px var(--font-ui); }
+.tb-steps > div > .tb-i, .tb-steps > div > .tb-spin, .tb-steps > div > .o { width: 18px; height: 18px; flex: none; }
+.tb-steps .o { border-radius: 50%; border: 1.5px solid var(--border\.control); }
+.tb-steps .is-done > .tb-i { color: var(--status\.success); }
+.tb-steps .is-todo { color: var(--text\.secondary); }
+.tb-steps .is-fail { color: var(--status\.error); }
+
+/* ── Chat header ───────────────────────────────────────────────────── */
+.tb-chathead { flex: none; display: flex; align-items: center; gap: 10px; padding: 8px 8px 8px 12px; background: var(--bg\.surface-1); border-bottom: 1px solid var(--border\.subtle); }
+.tb-chathead .tx { flex: 1; min-width: 0; }
+.tb-chathead .nm { font: 600 17px/22px var(--font-ui); display: flex; align-items: center; gap: 8px; min-width: 0; }
+.tb-chathead .nm span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-chathead .mt { font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); display: flex; align-items: center; gap: 6px; min-width: 0; white-space: nowrap; }
+.tb-diffchip { height: 32px; padding: 0 10px; border-radius: var(--radius\.full); display: inline-flex; align-items: center; gap: 6px; background: var(--bg\.surface-2); font: 500 13px/18px var(--font-mono); position: relative; flex: none; }
+.tb-diffchip::after { content: ""; position: absolute; inset: -6px 0; }
+.tb-diffchip .a { color: var(--diff\.add); } .tb-diffchip .d { color: var(--diff\.del); }
+
+/* ── Feed ──────────────────────────────────────────────────────────── */
+.tb-feed { flex: 1; min-height: 0; overflow: hidden; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; padding: 12px; }
+.tb-day { align-self: center; font: 500 12px/16px var(--font-ui); color: var(--text\.secondary); background: var(--bg\.surface-1); padding: 3px 10px; border-radius: var(--radius\.full); }
+.tb-me { align-self: flex-end; max-width: 84%; background: var(--bg\.surface-2); border-radius: var(--radius\.lg) var(--radius\.lg) var(--radius\.xs) var(--radius\.lg); padding: 8px 12px 6px; }
+.tb-me .tm { display: block; text-align: right; font: 400 12px/16px var(--font-ui); color: var(--text\.secondary); margin-top: 2px; }
+.tb-me.is-fail { box-shadow: inset 0 0 0 1px var(--status\.error); }
+.tb-me .fail { display: flex; align-items: center; gap: 6px; justify-content: flex-end; color: var(--status\.error); font: 500 12px/16px var(--font-ui); margin-top: 4px; }
+.tb-claude { max-width: 100%; }
+.tb-claude .who { display: flex; align-items: center; gap: 6px; font: 600 13px/18px var(--font-ui); margin-bottom: 2px; }
+.tb-claude .who .tb-mark { color: var(--accent\.text); }
+.tb-claude .who small { font-weight: 400; color: var(--text\.secondary); }
+.tb-claude p { margin: 0 0 4px; }
+.tb-claude code, .tb-code-inline { font: 400 13px/19px var(--font-mono); background: var(--bg\.surface-2); padding: 1px 4px; border-radius: var(--radius\.xs); }
+/* ToolLine — строка инструмента (Shirabe .o-tool) */
+.tb-tools { display: flex; flex-direction: column; gap: 1px; }
+.tb-tool { height: var(--size\.row); display: flex; align-items: center; gap: 8px; padding: 0 6px; border-radius: var(--radius\.sm); font: 400 12px/17px var(--font-mono); color: var(--text\.primary); white-space: nowrap; min-width: 0; }
+.tb-tool > .tb-i { width: 16px; height: 16px; color: var(--text\.secondary); }
+.tb-tool .tn { font-weight: 500; flex: none; }
+.tb-tool .ta { color: var(--text\.secondary); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.tb-tool .ts { flex: none; display: inline-flex; align-items: center; gap: 4px; color: var(--text\.secondary); }
+.tb-tool .ts .tb-i { width: 14px; height: 14px; stroke-width: 1.6; }
+.tb-tool .ts.ok { color: var(--status\.success); } .tb-tool .ts.err { color: var(--status\.error); }
+.tb-tool.is-running .ts { color: var(--accent\.text); }
+/* MiniConsole — команды хода */
+.tb-con { background: var(--bg\.code); border: 1px solid var(--border\.default); border-radius: var(--radius\.md); overflow: hidden; }
+.tb-con-h { height: 34px; display: flex; align-items: center; gap: 8px; padding: 0 10px; font: 500 13px/18px var(--font-ui); border-bottom: 1px solid var(--border\.subtle); }
+.tb-con-h > .tb-i { width: 16px; height: 16px; color: var(--text\.secondary); }
+.tb-con-h small { font-weight: 400; color: var(--text\.secondary); }
+.tb-con-row { display: flex; align-items: center; gap: 8px; padding: 4px 10px; font: 400 12px/17px var(--font-mono); min-width: 0; }
+.tb-con-row .p { color: var(--text\.secondary); flex: none; }
+.tb-con-row .c { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-con-row .r { flex: none; display: inline-flex; align-items: center; gap: 4px; color: var(--text\.secondary); }
+.tb-con-row .r.ok { color: var(--status\.success); } .tb-con-row .r.err { color: var(--status\.error); } .tb-con-row .r.run { color: var(--accent\.text); }
+.tb-con-row .r .tb-i { width: 14px; height: 14px; stroke-width: 1.6; }
+.tb-con-out { padding: 2px 10px 8px 26px; font: 400 12px/17px var(--font-mono); color: var(--text\.secondary); white-space: pre-wrap; word-break: break-all; }
+.tb-con-more { padding: 6px 10px 8px; font: 500 13px/18px var(--font-ui); color: var(--text\.link); border-top: 1px solid var(--border\.subtle); }
+/* Subagents */
+.tb-sub { background: var(--bg\.surface-1); border: 1px solid var(--border\.default); border-radius: var(--radius\.md); padding: 4px 0; }
+.tb-sub-h { display: flex; align-items: center; gap: 8px; padding: 6px 10px 4px; font: 500 13px/18px var(--font-ui); }
+.tb-sub-h > .tb-i { width: 16px; height: 16px; color: var(--text\.secondary); }
+.tb-sub-h .tmr { margin-left: auto; font: 500 12px/17px var(--font-mono); color: var(--status\.running); }
+.tb-sub-r { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 2px 8px; align-items: center; padding: 5px 10px; }
+.tb-sub-r .n { font: 500 13px/18px var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-sub-r .s { grid-column: 2; font: 400 12px/17px var(--font-mono); color: var(--text\.secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-sub-r .t { font: 500 12px/17px var(--font-mono); color: var(--text\.secondary); }
+.tb-sub-r .t.run { color: var(--status\.running); }
+
+/* ── Dock: решения, очередь, работа, поле ввода ────────────────────── */
+.tb-dock { flex: none; background: var(--bg\.surface-1); box-shadow: var(--shadow\.dock); padding: 8px 12px 10px; display: flex; flex-direction: column; gap: 8px; position: relative; z-index: 2; }
+.tb-dock.is-console { border-top: 1px solid var(--border\.subtle); }
+/* Work indicator + Stop */
+.tb-work { display: flex; align-items: center; gap: 10px; min-height: 40px; }
+.tb-work .lbl { display: flex; align-items: center; gap: 8px; font: 500 14px/19px var(--font-ui); flex: 1; min-width: 0; }
+.tb-work .lbl .tb-dots { color: var(--status\.running); }
+.tb-work .tmr { font: 500 13px/18px var(--font-mono); color: var(--status\.running); }
+.tb-stop { height: 40px; padding: 0 16px 0 12px; border-radius: var(--radius\.full); display: inline-flex; align-items: center; gap: 8px; background: var(--status\.error-bg); color: var(--status\.error); box-shadow: inset 0 0 0 1.5px var(--status\.error); font: 600 15px/20px var(--font-ui); flex: none; white-space: nowrap; }
+.tb-stop .tb-i { width: 18px; height: 18px; }
+.tb-stop .tb-i .f { fill: currentColor; }
+.tb-stop:active { background: var(--bg\.pressed); }
+.tb-stop.is-busy { background: var(--bg\.surface-2); color: var(--text\.secondary); box-shadow: inset 0 0 0 1px var(--border\.default); pointer-events: none; font-weight: 500; }
+.tb-stop-res { display: inline-flex; align-items: center; gap: 6px; font: 500 14px/19px var(--font-ui); flex: none; }
+.tb-stop-res.ok { color: var(--status\.success); } .tb-stop-res.err { color: var(--status\.error); }
+/* Question & Approval — решения живут в доке */
+.tb-decide { border-radius: var(--radius\.lg); background: var(--bg\.surface-1); box-shadow: inset 0 0 0 1.5px var(--status\.approval); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+.tb-decide-h { display: flex; align-items: center; gap: 8px; font: 600 15px/20px var(--font-ui); color: var(--status\.approval); }
+.tb-decide-h small { margin-left: auto; font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); }
+.tb-decide .q { font: 500 15px/21px var(--font-ui); }
+.tb-opts { display: flex; flex-direction: column; gap: 6px; }
+.tb-opt { min-height: 48px; padding: 8px 12px; border-radius: var(--radius\.md); border: 1px solid var(--border\.default); display: flex; align-items: flex-start; gap: 10px; text-align: left; width: 100%; }
+.tb-opt .rd { width: 18px; height: 18px; border-radius: 50%; border: 1.5px solid var(--border\.control); flex: none; margin-top: 1px; position: relative; }
+.tb-opt .l { font: 500 15px/20px var(--font-ui); display: block; }
+.tb-opt .d { font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); display: block; }
+.tb-opt:active { background: var(--bg\.pressed); }
+.tb-opt.is-on { background: var(--bg\.selected); border-color: var(--accent\.text); }
+.tb-opt.is-on .rd { border: 5px solid var(--accent\.text); }
+.tb-opt.is-on .d { color: var(--text\.primary); }
+.tb-opt--own .l { color: var(--text\.secondary); font-weight: 400; }
+.tb-cmd { background: var(--bg\.code); border: 1px solid var(--border\.default); border-radius: var(--radius\.md); padding: 8px 10px; font: 400 13px/19px var(--font-mono); white-space: pre-wrap; word-break: break-word; }
+.tb-cmd .dl { color: var(--text\.secondary); }
+.tb-decide .why { font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); }
+.tb-verdict { display: grid; grid-template-columns: 1fr 1.35fr; gap: 12px; }
+.tb-verdict .tb-btn { height: var(--size\.control-lg); }
+/* Queue */
+.tb-queue { border-radius: var(--radius\.lg); background: var(--bg\.surface-2); padding: 4px 0; }
+.tb-queue-h { display: flex; align-items: center; gap: 8px; padding: 6px 12px 4px; font: 500 13px/18px var(--font-ui); }
+.tb-queue-h > .tb-i { width: 16px; height: 16px; color: var(--text\.secondary); }
+.tb-queue-h small { font-weight: 400; color: var(--text\.secondary); }
+.tb-qi { display: flex; align-items: center; gap: 4px; padding: 0 2px 0 12px; min-height: 44px; }
+.tb-qi .no { font: 500 12px/16px var(--font-mono); color: var(--text\.secondary); width: 16px; flex: none; }
+.tb-qi .tx { flex: 1; min-width: 0; font: 400 14px/19px var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-qi .tx .tb-i { width: 14px; height: 14px; color: var(--text\.secondary); margin-right: 4px; }
+.tb-qi .tb-btn--icon { height: 44px; }
+.tb-qi.is-edit { flex-direction: column; align-items: stretch; gap: 8px; padding: 6px 12px 8px; background: var(--bg\.selected); }
+.tb-qi.is-edit .acts { display: flex; gap: 8px; justify-content: flex-end; }
+.tb-qi.is-sent { color: var(--text\.secondary); }
+/* Composer */
+.tb-comp { display: flex; align-items: flex-end; gap: 6px; }
+.tb-field { flex: 1; min-width: 0; min-height: 44px; padding: 11px 14px; border-radius: 22px; background: var(--bg\.surface-2); border: 1px solid transparent; font: 400 15px/21px var(--font-ui); color: var(--text\.primary); }
+.tb-field .ph { color: var(--text\.secondary); }
+.tb-field.is-focus { border-color: var(--border\.focus); outline: none; }
+.tb-field--box { border-radius: var(--radius\.md); border-color: var(--border\.control); background: var(--bg\.surface-1); min-height: 44px; padding: 10px 12px; }
+.tb-field--box.is-focus { border-color: var(--border\.focus); box-shadow: 0 0 0 1px var(--border\.focus); }
+.tb-field--box.is-error { border-color: var(--status\.error); box-shadow: 0 0 0 1px var(--status\.error); }
+.tb-caret { display: inline-block; width: 1.5px; height: 18px; background: var(--accent\.text); vertical-align: -3px; margin-left: 1px; }
+.tb-send { width: 44px; height: 44px; border-radius: 50%; background: var(--accent\.default); color: var(--text\.on-accent); display: grid; place-items: center; flex: none; }
+.tb-send:active { background: var(--accent\.pressed); }
+.tb-send.is-disabled { background: var(--bg\.disabled); color: var(--text\.disabled); }
+.tb-clip { width: 44px; height: 44px; display: grid; place-items: center; color: var(--text\.secondary); flex: none; border-radius: 50%; }
+.tb-clip:active { background: var(--bg\.pressed); }
+.tb-att { display: flex; gap: 8px; overflow: hidden; }
+.tb-att-i { position: relative; flex: none; width: 64px; height: 64px; border-radius: var(--radius\.md); overflow: hidden; background: var(--bg\.surface-2); border: 1px solid var(--border\.default); }
+.tb-att-i .x { position: absolute; top: 3px; right: 3px; width: 22px; height: 22px; border-radius: 50%; background: rgba(0, 0, 0, .62); color: #ffffff; display: grid; place-items: center; }
+.tb-att-i .x::after { content: ""; position: absolute; inset: -8px; }
+.tb-att-i .x .tb-i { width: 14px; height: 14px; stroke-width: 1.6; }
+.tb-att-f { width: 132px; padding: 8px; display: flex; flex-direction: column; justify-content: space-between; }
+.tb-att-f .n { font: 500 12px/16px var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; padding-right: 18px; }
+.tb-att-f .s { font: 400 12px/16px var(--font-ui); color: var(--text\.secondary); display: flex; align-items: center; gap: 4px; }
+.tb-att-i.is-up::before { content: ""; position: absolute; left: 0; bottom: 0; height: 3px; width: var(--v, 40%); background: var(--accent\.default); }
+.tb-att-i.is-fail { border-color: var(--status\.error); }
+.tb-att-note { font: 400 12px/16px var(--font-ui); color: var(--text\.secondary); }
+
+/* ── Files & images in feed, viewer ────────────────────────────────── */
+.tb-img { width: 232px; border-radius: var(--radius\.md); overflow: hidden; border: 1px solid var(--border\.default); background: var(--bg\.surface-1); }
+.tb-img .pic { height: 150px; position: relative; display: grid; place-items: center; background: var(--bg\.surface-2); color: var(--text\.secondary); }
+.tb-img .cap { display: flex; align-items: center; gap: 6px; padding: 6px 8px; font: 400 12px/16px var(--font-ui); color: var(--text\.secondary); }
+.tb-img .cap b { font-weight: 500; color: var(--text\.primary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-file { display: flex; align-items: center; gap: 10px; padding: 8px 4px 8px 8px; border-radius: var(--radius\.md); background: var(--bg\.surface-1); border: 1px solid var(--border\.default); max-width: 320px; }
+.tb-file .ic { width: 40px; height: 40px; border-radius: var(--radius\.md); background: var(--accent\.subtle); color: var(--accent\.text); display: grid; place-items: center; flex: none; font: 600 10px/1 var(--font-mono); position: relative; }
+.tb-file .ic span { position: absolute; bottom: 4px; left: 0; right: 0; text-align: center; }
+.tb-file .ic .tb-i { margin-top: -6px; }
+.tb-file .n { font: 500 14px/19px var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-file .s { font: 400 12px/16px var(--font-ui); color: var(--text\.secondary); }
+.tb-file.is-fail .ic { background: var(--status\.error-bg); color: var(--status\.error); }
+.tb-file.is-fail .s { color: var(--status\.error); }
+.tb-viewer { position: absolute; inset: 0; background: var(--viewer\.bg); color: var(--viewer\.text); display: flex; flex-direction: column; z-index: 60; }
+.tb-viewer-t, .tb-viewer-b { flex: none; display: flex; align-items: center; gap: 4px; padding: 4px; background: rgba(0, 0, 0, .55); }
+.tb-viewer-t .tx { flex: 1; min-width: 0; text-align: center; }
+.tb-viewer-t .tx b { display: block; font: 600 15px/20px var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-viewer-t .tx small { font: 400 12px/16px var(--font-ui); color: #c9ccd1; }
+.tb-viewer .vb { width: 44px; height: 44px; display: grid; place-items: center; color: var(--viewer\.text); }
+.tb-viewer-pic { flex: 1; display: grid; place-items: center; padding: 8px 0; }
+.tb-viewer-b { justify-content: space-between; padding: 6px 12px 10px; font: 400 13px/18px var(--font-ui); color: #c9ccd1; }
+
+/* ── Workflow ──────────────────────────────────────────────────────── */
+.tb-wf { background: var(--bg\.surface-1); border: 1px solid var(--border\.default); border-radius: var(--radius\.lg); overflow: hidden; }
+.tb-wf-h { display: flex; align-items: center; gap: 10px; padding: 10px 6px 10px 12px; min-height: 52px; }
+.tb-wf-h > .tb-i { color: var(--accent\.text); }
+.tb-wf-h .tx { flex: 1; min-width: 0; }
+.tb-wf-h .tx b { display: block; font: 600 15px/20px var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-wf-h .tx small { display: block; font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); }
+.tb-wf-bar { margin: 0 12px 12px; display: flex; align-items: center; gap: 10px; font: 500 12px/16px var(--font-mono); color: var(--text\.secondary); }
+.tb-prog { flex: 1; height: 4px; border-radius: 2px; background: var(--bg\.pressed); position: relative; overflow: hidden; }
+.tb-prog::after { content: ""; position: absolute; inset: 0 auto 0 0; width: var(--v, 0%); background: var(--accent\.default); border-radius: 2px; }
+.tb-prog.is-err::after { background: var(--status\.error); }
+.tb-wf-ph { border-top: 1px solid var(--border\.subtle); padding: 8px 12px; }
+.tb-wf-ph .ph { display: flex; align-items: center; gap: 10px; font: 500 14px/19px var(--font-ui); min-height: 28px; }
+.tb-wf-ph .ph small { margin-left: auto; font: 400 12px/16px var(--font-mono); color: var(--text\.secondary); }
+.tb-wf-ph .ph .pi { width: 18px; height: 18px; flex: none; display: grid; place-items: center; }
+.tb-wf-ph .ph .pi .tb-i { width: 18px; height: 18px; }
+.tb-wf-ph .ph .o { width: 14px; height: 14px; border-radius: 50%; border: 1.5px solid var(--border\.control); }
+.tb-wf-ph.is-done .pi { color: var(--status\.success); }
+.tb-wf-ph.is-todo .ph { color: var(--text\.secondary); }
+.tb-wf-ph.is-fail .ph, .tb-wf-ph.is-fail .pi { color: var(--status\.error); }
+.tb-wf-ag { margin: 4px 0 2px 28px; display: flex; flex-direction: column; }
+.tb-wf-ag > div { display: grid; grid-template-columns: 10px minmax(0, 1fr) auto; gap: 0 8px; align-items: center; min-height: 26px; }
+.tb-wf-ag .n { font: 400 13px/18px var(--font-ui); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-wf-ag .n em { font-style: normal; color: var(--text\.secondary); font: 400 12px/17px var(--font-mono); }
+.tb-wf-ag .t { font: 400 12px/17px var(--font-mono); color: var(--text\.secondary); }
+.tb-wf-ag .t.run { color: var(--status\.running); }
+.tb-wf-ag .t.err { color: var(--status\.error); }
+.tb-st--done::before { inset: 2px; border-radius: 50%; border: 1.5px solid var(--text\.secondary); }
+
+/* ── Diff ──────────────────────────────────────────────────────────── */
+.tb-dfile { background: var(--bg\.surface-1); border-radius: var(--radius\.lg); margin: 0 12px; overflow: hidden; box-shadow: var(--shadow\.card); }
+.tb-dfile-h { min-height: 48px; display: flex; align-items: center; gap: 8px; padding: 6px 6px 6px 12px; border-bottom: 1px solid var(--border\.subtle); }
+.tb-dfile-h .pth { flex: 1; min-width: 0; font: 400 12px/17px var(--font-mono); color: var(--text\.secondary); overflow: hidden; white-space: nowrap; display: flex; }
+.tb-dfile-h .pth b { font-weight: 500; color: var(--text\.primary); flex: none; }
+.tb-dfile-h .pth span { overflow: hidden; text-overflow: ellipsis; }
+.tb-dfile-h .nums { font: 500 12px/17px var(--font-mono); flex: none; }
+.tb-dfile-h .nums .a { color: var(--diff\.add); } .tb-dfile-h .nums .d { color: var(--diff\.del); }
+.tb-dl { display: grid; grid-template-columns: 30px 14px minmax(0, 1fr); font: 400 12px/18px var(--font-mono); background: var(--bg\.code); }
+.tb-dl .ln { color: var(--text\.secondary); text-align: right; padding-right: 4px; user-select: none; }
+.tb-dl .sg { color: var(--text\.secondary); text-align: center; }
+.tb-dl .cd { white-space: pre-wrap; overflow-wrap: anywhere; padding-right: 8px; padding-left: 1.5ch; text-indent: -1.5ch; }
+.tb-dl.add { background: var(--diff\.add-bg); } .tb-dl.add .sg { color: var(--diff\.add); }
+.tb-dl.del { background: var(--diff\.del-bg); } .tb-dl.del .sg { color: var(--diff\.del); }
+.tb-dl.hunk { background: var(--bg\.surface-2); color: var(--text\.secondary); }
+.tb-dl.hunk .cd { color: var(--accent\.text); }
+.tb-dl .kw { color: var(--syntax\.keyword); } .tb-dl .str { color: var(--syntax\.string); } .tb-dl .fn { color: var(--syntax\.function); } .tb-dl .cm { color: var(--syntax\.comment); }
+.tb-dsum { display: flex; align-items: center; gap: 10px; padding: 4px 12px 10px; font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); }
+.tb-dsum .a { color: var(--diff\.add); font: 500 13px/18px var(--font-mono); } .tb-dsum .d { color: var(--diff\.del); font: 500 13px/18px var(--font-mono); }
+.tb-seg { display: inline-flex; padding: 3px; border-radius: var(--radius\.md); background: var(--bg\.surface-2); gap: 2px; }
+.tb-seg > span { height: 34px; padding: 0 14px; border-radius: var(--radius\.sm); display: inline-flex; align-items: center; font: 500 14px/18px var(--font-ui); color: var(--text\.secondary); white-space: nowrap; }
+.tb-seg > span.is-on { background: var(--bg\.surface-1); color: var(--text\.primary); box-shadow: 0 0 0 1px var(--border\.default); }
+.tb-seg--block { display: flex; } .tb-seg--block > span { flex: 1; justify-content: center; }
+
+/* ── Sheet (переименование) ────────────────────────────────────────── */
+.tb-scrim { position: absolute; inset: 0; background: var(--scrim); z-index: 40; display: flex; flex-direction: column; justify-content: flex-end; }
+.tb-sheet { background: var(--bg\.surface-3); border-radius: var(--radius\.island) var(--radius\.island) 0 0; box-shadow: var(--shadow\.popup); padding: 8px 16px 16px; display: flex; flex-direction: column; gap: 12px; }
+.tb-sheet .grab { width: 36px; height: 4px; border-radius: 2px; background: var(--border\.control); align-self: center; margin-bottom: 4px; }
+.tb-sheet h2 { margin: 0; font: 600 17px/22px var(--font-ui); }
+.tb-sheet .help { font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); }
+.tb-sheet .help.err { color: var(--status\.error); display: flex; gap: 6px; align-items: center; }
+.tb-sheet .acts { display: grid; grid-template-columns: 1fr 1.35fr; gap: 12px; }
+
+/* ── Settings ──────────────────────────────────────────────────────── */
+.tb-set { background: var(--bg\.surface-1); border-radius: var(--radius\.lg); margin: 0 12px; overflow: hidden; box-shadow: var(--shadow\.card); }
+.tb-set-r { display: flex; align-items: center; gap: 12px; padding: 10px 12px; min-height: 56px; box-shadow: inset 0 -1px 0 var(--border\.subtle); }
+.tb-set-r:last-child { box-shadow: none; }
+.tb-set-r > .tb-i { color: var(--text\.secondary); }
+.tb-set-r .tx { flex: 1; min-width: 0; }
+.tb-set-r .tx b { display: block; font: 400 15px/20px var(--font-ui); }
+.tb-set-r .tx small { display: block; font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); }
+.tb-set-r .err { color: var(--status\.error); }
+.tb-set-r.is-col { flex-direction: column; align-items: stretch; }
+.tb-set-foot { padding: 12px 16px; font: 400 12px/16px var(--font-mono); color: var(--text\.secondary); text-align: center; }
+.tb-tg { width: 44px; height: 26px; border-radius: 13px; background: var(--bg\.surface-1); box-shadow: inset 0 0 0 1.5px var(--border\.control); position: relative; flex: none; }
+.tb-tg::before { content: ""; position: absolute; top: 4px; left: 4px; width: 18px; height: 18px; border-radius: 50%; background: var(--border\.control); transition: left .15s; }
+.tb-tg.is-on { background: var(--accent\.default); box-shadow: none; }
+.tb-tg.is-on::before { left: 22px; background: var(--text\.on-accent); }
+.tb-tg.is-busy::before { background: transparent; box-shadow: inset 0 0 0 2px var(--text\.on-accent); }
+.tb-tg.is-busy:not(.is-on)::before { box-shadow: inset 0 0 0 2px var(--border\.control); }
+.tb-tg.is-disabled { opacity: .45; }
+
+/* ── Bot messages (рисует Telegram; здесь — макет) ─────────────────── */
+.tb-tgchat { flex: 1; min-height: 0; display: flex; flex-direction: column; justify-content: flex-end; gap: 10px; padding: 12px 10px; background: var(--bg\.base); overflow: hidden; }
+.tb-botmsg { max-width: 300px; align-self: flex-start; display: flex; flex-direction: column; gap: 4px; }
+.tb-botmsg .bb { background: var(--bg\.surface-1); border-radius: 14px 14px 14px 4px; padding: 7px 10px 6px; font: 400 15px/20px var(--font-ui); box-shadow: var(--shadow\.card); }
+.tb-botmsg .bb b { font-weight: 600; }
+.tb-botmsg .bb .ctx { color: var(--text\.secondary); font-size: 14px; }
+.tb-botmsg .bb pre { margin: 4px 0; padding: 6px 8px; border-radius: 6px; background: var(--bg\.code); font: 400 13px/18px var(--font-mono); white-space: pre-wrap; word-break: break-word; border-left: 3px solid var(--text\.link); }
+.tb-botmsg .bb .tm { float: right; margin: 6px 0 0 10px; font: 400 12px/14px var(--font-ui); color: var(--text\.secondary); }
+.tb-botmsg .bb .vd { display: block; margin-top: 4px; font: 500 14px/19px var(--font-ui); }
+.tb-botmsg .bb .vd.ok { color: var(--status\.success); } .tb-botmsg .bb .vd.no { color: var(--status\.error); }
+.tb-ikb { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.tb-ikb span { grid-column: span 2; height: 40px; border-radius: 8px; background: var(--bg\.surface-1); display: flex; align-items: center; justify-content: center; gap: 6px; font: 500 14px/18px var(--font-ui); color: var(--text\.link); box-shadow: var(--shadow\.card); }
+.tb-ikb span.h { grid-column: span 1; color: var(--text\.primary); }
+.tb-ikb span .tb-i { width: 14px; height: 14px; }
+.tb-push { width: 340px; border-radius: 18px; background: var(--bg\.surface-3); box-shadow: var(--shadow\.popup); padding: 10px 12px; display: flex; gap: 10px; }
+.tb-push .tx { flex: 1; min-width: 0; font: 400 14px/19px var(--font-ui); }
+.tb-push .tx .ap { display: flex; justify-content: space-between; font: 400 12px/16px var(--font-ui); color: var(--text\.secondary); }
+.tb-push .tx b { font-weight: 600; }
+
+/* ── Tray menu (Windows) ───────────────────────────────────────────── */
+.tb-traymenu { width: 240px; padding: 4px; border-radius: 8px; background: var(--bg\.surface-3); border: 1px solid var(--border\.default); box-shadow: var(--shadow\.popup); font: 400 13px/18px var(--font-ui); }
+.tb-traymenu > div { height: 30px; display: flex; align-items: center; gap: 8px; padding: 0 10px; border-radius: 4px; }
+.tb-traymenu > div .tb-i { width: 16px; height: 16px; color: var(--text\.secondary); }
+.tb-traymenu > div.is-hl { background: var(--bg\.selected); }
+.tb-traymenu > div.st { font-weight: 600; height: 34px; }
+.tb-traymenu > div.st small { margin-left: auto; font: 400 12px/16px var(--font-mono); color: var(--text\.secondary); }
+.tb-traymenu > div.why { height: auto; padding: 0 10px 6px 28px; font-size: 12px; line-height: 16px; color: var(--text\.secondary); }
+.tb-traymenu hr { border: 0; height: 1px; background: var(--border\.subtle); margin: 4px 0; }
+
+/* ── Bottom nav (три раздела мини-аппы) ────────────────────────────── */
+.tb-nav { flex: none; height: 56px; display: flex; background: var(--bg\.surface-1); border-top: 1px solid var(--border\.subtle); }
+.tb-nav > span { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; font: 500 11px/14px var(--font-ui); color: var(--text\.secondary); position: relative; }
+.tb-nav > span.is-on { color: var(--accent\.text); }
+.tb-nav > span .bd { position: absolute; top: 6px; left: calc(50% + 6px); min-width: 16px; height: 16px; padding: 0 4px; border-radius: 8px; background: var(--status\.approval); color: var(--bg\.surface-1); font: 600 11px/16px var(--font-ui); text-align: center; }
+.tb-fab { flex: none; padding: 8px 12px 10px; background: var(--bg\.base); }
+/* экран: шапка, вкладки, док и навигация не сжимаются; прокручивается список или лента */
+.tb-scr > * { flex-shrink: 0; }
+.tb-scr > .tb-list, .tb-scr > .tb-feed, .tb-scr > .tb-scroll { flex-shrink: 1; min-height: 0; overflow: hidden; }
+.tb-scr > .tb-sp { flex: 1 1 0; }
+.tb-feed > * { flex-shrink: 0; }
+/* бейдж бэкенда — как .o-be в Shirabe (Claude: квадрат со скруглением) */
+.tb-be { width: 16px; height: 16px; flex: none; display: inline-flex; align-items: center; justify-content: center; font: 600 9px/1 var(--font-ui); color: var(--text\.secondary); border: 1.2px solid currentColor; border-radius: 4px; }
+.tb-skel { background: var(--bg\.pressed); }
+.tb-work .lbl { white-space: nowrap; }
+.tb-stop.is-busy { padding: 0 12px; font-size: 14px; gap: 6px; }

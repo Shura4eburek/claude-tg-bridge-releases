@@ -1,0 +1,221 @@
+/* Мини-аппа v2: то, чего нет в bundle.css дизайн-системы. bundle.css рассчитан на
+   превью (рамка телефона, неподвижные экраны) — здесь живая раскладка на весь
+   WebView: экран на высоту окна, прокрутка списка и ленты, док над клавиатурой. */
+
+html, body { margin: 0; height: 100%; }
+/* Безопасные зоны: вырез и полоска «домой» (env) и кнопки Telegram поверх полноэкранной
+   аппы (--tg-content-safe-area-*). Берём большее — где-то задано одно, где-то другое.
+   --sa-ov-* — третий источник: стенд телефона ставит их из ?__safe= (js/safe-area-override.js);
+   в обычной работе их нет, и это 0. */
+:root {
+  --sa-t: max(env(safe-area-inset-top, 0px), calc(var(--tg-safe-area-inset-top, 0px) + var(--tg-content-safe-area-inset-top, 0px)), var(--sa-ov-t, 0px));
+  --sa-b: max(env(safe-area-inset-bottom, 0px), calc(var(--tg-safe-area-inset-bottom, 0px) + var(--tg-content-safe-area-inset-bottom, 0px)), var(--sa-ov-b, 0px));
+  --sa-l: max(env(safe-area-inset-left, 0px), calc(var(--tg-safe-area-inset-left, 0px) + var(--tg-content-safe-area-inset-left, 0px)), var(--sa-ov-l, 0px));
+  --sa-r: max(env(safe-area-inset-right, 0px), calc(var(--tg-safe-area-inset-right, 0px) + var(--tg-content-safe-area-inset-right, 0px)), var(--sa-ov-r, 0px));
+}
+/* Клавиатура закрывает полоску «домой» — док прижимается прямо к клавиатуре. */
+:root.kb { --sa-b: 0px; }
+body.tb { overflow: hidden; }
+#app { height: var(--vh, 100vh); display: flex; flex-direction: column; position: relative; padding: var(--sa-t) var(--sa-r) 0 var(--sa-l); }
+/* Низ — у того, что прижато к низу экрана: фон панели уходит под полоску «домой». */
+.tb-nav { height: calc(56px + var(--sa-b)); padding-bottom: var(--sa-b); }
+.tb-dock { padding-bottom: calc(10px + var(--sa-b)); }
+.tb-sheet { padding-bottom: calc(16px + var(--sa-b)); }
+/* В чате верхнюю зону занимает шапка своим фоном; баннер сети перед ней — отступом. */
+#app:has(> .tb-scr--chat) { padding-top: 0; }
+.tb-scr--chat > .tb-chathead:first-child { padding-top: calc(8px + var(--sa-t)); }
+.tb-scr--chat > .tb-banner:first-child { margin-top: calc(8px + var(--sa-t)); }
+/* «Изменения» — так же: белая шапка уходит под вырез, а не серая полоса над ней. */
+#app:has(> .tb-scr--diff) { padding-top: 0; }
+.tb-scr--diff > .tb-chathead:first-child { padding-top: calc(8px + var(--sa-t)); }
+html.fs .tb-scr--diff > .tb-chathead:first-child { padding-top: calc(4px + var(--sa-t)); }
+#app > .tb-scr { height: 100%; }
+/* В превью список и лента обрезаны по высоте телефона; живьём они прокручиваются. */
+.tb-scr > .tb-list, .tb-scr > .tb-scroll { overflow-y: auto; -webkit-overflow-scrolling: touch; }
+/* Прокрутка — колонка flex: без этого группы сжимались по высоте и обрезали последнюю строку. */
+.tb-scr > .tb-scroll > *, .tb-scr > .tb-list > * { flex-shrink: 0; }
+.tb-scr--chat > .tb-feed { overflow-y: auto; justify-content: flex-start; -webkit-overflow-scrolling: touch; }
+.tb-scr--chat > .tb-feed > :first-child { margin-top: auto; }
+.tb-scrim { position: fixed; }
+
+.tb-src { margin-left: auto; flex: none; font: 500 11px/14px var(--font-ui); color: var(--text\.secondary); background: var(--bg\.surface-2); padding: 1px 6px; border-radius: var(--radius\.full); }
+.tb-sys { align-self: center; display: flex; align-items: center; gap: 6px; max-width: 100%; font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); }
+.tb-sys code { font: 400 12px/17px var(--font-mono); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.tb-sys.tb-err { color: var(--status\.error); }
+.tb-from { display: block; font: 400 11px/14px var(--font-ui); color: var(--text\.secondary); }
+.tb-lbl { display: flex; flex-direction: column; gap: 4px; font: 500 13px/18px var(--font-ui); color: var(--text\.secondary); }
+.tb-lbl select.tb-field--box, .tb-lbl input.tb-field--box { color: var(--text\.primary); }
+.tb-menu-r { display: flex; align-items: center; gap: 12px; min-height: 48px; padding: 0 4px; font: 500 15px/20px var(--font-ui); text-align: left; border-radius: var(--radius\.md); }
+.tb-menu-r:active { background: var(--bg\.pressed); }
+.tb-stop-hint { padding: 0 2px; }
+.tb-skel--msg { height: 44px; width: 70%; border-radius: var(--radius\.lg); }
+.tb-skel--msg:nth-child(2n) { align-self: flex-end; width: 50%; }
+.tb-code { margin: 6px 0; padding: 8px 10px; background: var(--bg\.code); border-radius: var(--radius\.md); font: 400 12px/17px var(--font-mono); white-space: pre-wrap; word-break: break-word; }
+textarea.tb-field { resize: none; font: inherit; color: var(--text\.primary); border: 0; outline: 0; }
+/* В листах поле — рамкой, как соседние select и input; без рамки «Первое сообщение» читалось подписью. */
+textarea.tb-field--box { border: 1px solid var(--border\.control); font: 400 15px/21px var(--font-ui); }
+textarea.tb-field--box:focus { border-color: var(--border\.focus); box-shadow: 0 0 0 1px var(--border\.focus); }
+/* Вариант ответа в одну строку — по центру кнопки, а не у верхнего края. */
+.tb-opt:not(:has(.d)) { align-items: center; }
+.tb-opt:not(:has(.d)) .rd { margin-top: 0; }
+/* Длинная подпись аккаунта — многоточием, а не обрезом рядом с лимитом. */
+.tb-acct .lb { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.tb-scard .r3 .tb-acct { flex: 0 1 auto; }
+/* Узкий экран: полоска лимита уступает место подписи аккаунта — процента достаточно. */
+@media (max-width: 420px) { .tb-scard .r3 .tb-limit i { display: none; } }
+select.tb-field--box { appearance: auto; }
+.tb-viewer { position: fixed; padding: var(--sa-t) var(--sa-r) var(--sa-b) var(--sa-l); }
+
+/* 014 · разметка ответа (md.js): таблицы, списки, заголовки, цитаты, блоки кода. В
+   bundle.css дизайн-системы этого нет — превью там без длинных ответов. */
+.tb-claude .tb-md-h1, .tb-claude .tb-md-h2, .tb-claude .tb-md-h3 { font: 600 17px/22px var(--font-ui); margin: 8px 0 4px; }
+.tb-claude .tb-md-h2 { font-size: 16px; }
+.tb-claude .tb-md-h3 { font-size: 15px; color: var(--text\.secondary); }
+.tb-md-l { margin: 0 0 6px; padding-left: 20px; }
+.tb-md-l li { margin: 2px 0; }
+.tb-md-l .tb-md-l { margin: 2px 0 0; }
+.tb-md-q { margin: 4px 0 6px; padding: 2px 0 2px 10px; border-left: 3px solid var(--border\.default); color: var(--text\.secondary); }
+/* Широкая таблица прокручивается внутри себя, а не растягивает ленту вбок. */
+.tb-md-table { overflow-x: auto; margin: 4px 0 8px; -webkit-overflow-scrolling: touch; }
+.tb-md-table table { border-collapse: collapse; font: 400 13px/18px var(--font-ui); min-width: 100%; }
+.tb-md-table th, .tb-md-table td { border: 1px solid var(--border\.subtle); padding: 4px 8px; text-align: left; vertical-align: top; white-space: nowrap; }
+.tb-md-table th { background: var(--bg\.surface-2); font-weight: 600; }
+.tb-cb { margin: 6px 0; border: 1px solid var(--border\.subtle); border-radius: var(--radius\.md); background: var(--bg\.code); overflow: hidden; }
+.tb-cb-h { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 2px 4px 2px 10px; font: 500 12px/16px var(--font-ui); color: var(--text\.secondary); border-bottom: 1px solid var(--border\.subtle); }
+.tb-cb-copy, .tb-cb-more { font: 500 12px/16px var(--font-ui); color: var(--text\.link); padding: 8px 8px; min-height: 32px; }
+.tb-cb-copy.is-done { color: var(--status\.running); }
+.tb-cb .tb-code { margin: 0; border-radius: 0; overflow-x: auto; white-space: pre; word-break: normal; }
+/* Свёрнутый: двенадцать строк и затухание — видно, что продолжение есть. */
+.tb-cb.is-fold .tb-code { max-height: calc(12 * 17px + 16px); overflow: hidden; -webkit-mask-image: linear-gradient(#000 70%, transparent); mask-image: linear-gradient(#000 70%, transparent); }
+.tb-cb-more { display: block; width: 100%; text-align: center; border-top: 1px solid var(--border\.subtle); }
+.tb-copy { display: inline-grid; place-items: center; width: 28px; height: 28px; margin-left: auto; color: var(--text\.secondary); border-radius: var(--radius\.sm); flex: none; }
+.tb-copy:active, .tb-copy.is-done { color: var(--accent\.text); }
+.tb-me .tm { display: flex; align-items: center; justify-content: flex-end; gap: 4px; }
+.tb-me .tm .tb-copy { margin-left: 0; width: 24px; height: 24px; }
+/* Текст ленты выделяется: клиент Telegram на iOS гасит выделение на всей странице. */
+.tb-feed .tb-me, .tb-feed .tb-claude, .tb-feed .tb-code { -webkit-user-select: text; user-select: text; }
+
+/* 014 · US2: «Показать раньше» вверху ленты и «К последним» над доком. */
+.tb-earlier { align-self: center; display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 4px 0; }
+.tb-tolast { position: absolute; right: 12px; top: -52px; z-index: 3; height: 40px; min-width: 40px; padding: 0 12px; border-radius: var(--radius\.full); display: inline-flex; align-items: center; gap: 4px; background: var(--bg\.surface-3); color: var(--text\.primary); box-shadow: var(--shadow\.popup); font: 600 13px/18px var(--font-ui); }
+
+/* 014 · US3: модель, ветка и запас в шапке чата; плашка аварии и её лист. */
+.tb-chathead .mt2 { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; margin-top: 2px; font: 400 12px/16px var(--font-ui); color: var(--text\.secondary); }
+.tb-branch { display: inline-flex; align-items: center; gap: 3px; font-family: var(--font-mono); max-width: 50vw; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tb-usage { font-variant-numeric: tabular-nums; }
+.tb-usage .is-warn { color: var(--status\.approval); font-weight: 600; }
+.tb-outage { margin: 0 12px 8px; cursor: pointer; }
+.tb-scr--chat .tb-outage { margin-top: 8px; }
+/* В чате баннер сбоя — одной строкой: место под ленту; подробности — по нажатию. */
+.tb-scr--chat .tb-outage .d { display: none; }
+.tb-outage .d { display: block; }
+.tb-outage b { display: block; }
+.tb-inc { display: flex; flex-direction: column; gap: 4px; padding: 8px 0; border-bottom: 1px solid var(--border\.subtle); }
+.tb-inc p { margin: 0; }
+.tb-inc .tb-btn { align-self: flex-start; margin-top: 4px; }
+
+/* 014 · US5: экран «Изменения» — признаки коммита и пуша в сводке. */
+.tb-dflag { flex: none; padding: 1px 6px; border-radius: var(--radius\.full); background: var(--status\.approval-bg); color: var(--status\.approval); font: 500 11px/14px var(--font-ui); }
+.tb-dsum { flex-wrap: wrap; }
+.tb-chathead .tb-diffchip { position: relative; flex: none; cursor: pointer; }
+/* Вложения в ленте: у своих — превью и чипы сессий Shirabe, у агента — плитки и файлы. */
+.tb-atts { display: flex; flex-direction: column; gap: 6px; margin: 6px 0 4px; }
+.tb-me .tb-atts { align-items: flex-end; margin-top: 0; }
+.tb-me .tb-img { width: 200px; }
+.tb-img .fail { display: none; color: var(--status\.error); margin-left: auto; }
+.tb-img.is-fail .pic img { display: none; }
+.tb-img.is-fail .fail { display: inline; }
+.tb-achips { display: flex; flex-wrap: wrap; gap: 4px; justify-content: flex-end; margin-bottom: 4px; }
+.tb-achip { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: var(--radius\.full); background: var(--bg\.surface-1); border: 1px solid var(--border\.default); font: 500 12px/16px var(--font-ui); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* 014 · US6: точка «непрочитано» у имени и крестик закрытия в карточке. */
+.tb-unread { flex: none; width: 8px; height: 8px; border-radius: 50%; background: var(--accent\.default); margin-left: 6px; }
+.tb-scard .r1 .tm { margin-left: auto; }
+.tb-card-x { width: 32px; height: 32px; margin: -6px -6px -6px 2px; color: var(--text\.secondary); }
+
+/* 014 · US7: сжатие истории перед продолжением «из сводки». */
+.tb-compact { display: flex; align-items: center; gap: 6px; margin-top: 4px; font: 500 12px/16px var(--font-ui); color: var(--accent\.text); }
+.tb-compact .tb-spin { width: 12px; height: 12px; }
+
+/* 014 · US8 (FR-025): полноэкранный режим — название экрана и имя чата стоят в полосе
+   Telegram между «Закрыть» и «⋯», а не отдельной строкой под ними (как в старом мосте).
+   fixed — полоса привязана к экрану; 104px — запас под кнопки клиента по бокам. */
+html.fs .tb-head h1 { position: fixed; top: var(--tg-safe-area-inset-top, 0px); left: 0; right: 0; z-index: 30; height: max(var(--tg-content-safe-area-inset-top, 0px), 44px); margin: 0; padding: 0 104px; display: flex; align-items: center; justify-content: center; font: 600 17px/22px var(--font-ui); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+html.fs .tb-chathead .nm { position: fixed; top: var(--tg-safe-area-inset-top, 0px); left: 0; right: 0; z-index: 30; height: max(var(--tg-content-safe-area-inset-top, 0px), 44px); margin: 0; padding: 0 104px; display: flex; align-items: center; justify-content: center; font: 600 17px/22px var(--font-ui); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; pointer-events: none; }
+html.fs .tb-chathead .nm > span { overflow: hidden; text-overflow: ellipsis; }
+/* Шапка списка держала только заголовок — без него она пустая. */
+html.fs .tb-head { padding: 0; height: 0; }
+html.fs .tb-scr--chat > .tb-chathead:first-child { padding-top: calc(4px + var(--sa-t)); }
+
+/* 016 · подключение телефона вне Telegram (connect.js): пустое состояние, поле имени и
+   кнопка столбиком; на экране без нижней навигации низ — под полоску «домой». */
+.tb-connect { display: flex; flex-direction: column; gap: 16px; padding: 8px 16px calc(16px + var(--sa-b)); }
+.tb-connect > .tb-empty { flex: none; padding-top: 24px; }
+.tb-connect .tb-empty .a .tb-spin { width: 20px; height: 20px; }
+
+/* Установка на iPhone (016): шаги и стрелка к панели Safari внизу — сама страница поставить
+   себя на экран «Домой» не может. */
+.tb-steps { display: flex; flex-direction: column; gap: 8px; padding: 0 16px 12px; }
+.tb-step { display: flex; align-items: center; gap: 10px; padding: 10px 12px; border-radius: 10px; background: var(--bg\.surface-1); font: 400 14px/19px var(--font-ui); }
+.tb-step .n { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; background: var(--accent\.bg, var(--bg\.surface-2)); font: 600 12px/1 var(--font-ui); }
+.tb-step .tb-i { flex: none; width: 18px; height: 18px; color: var(--accent\.text, var(--text\.secondary)); }
+.tb-step .tx { min-width: 0; }
+.tb-step .tb-gi { flex: none; width: 20px; height: 20px; color: var(--accent\.text, var(--text\.secondary)); }
+/* Стрелка — к кнопке браузера: угол и поворот по браузеру (install-guide.js). */
+.tb-arrow { position: fixed; left: 50%; bottom: calc(var(--sa-b, 0px) + 12px); --tx: -50%; --rot: 0deg; transform: translate(var(--tx), 0) rotate(var(--rot)); animation: tb-arrow 1.4s ease-in-out infinite; color: var(--accent\.text, var(--text\.primary)); }
+.tb-arrow--bottom-addr { left: 26%; bottom: calc(var(--sa-b, 0px) + 4px); }
+.tb-arrow--bottom-right { left: auto; right: 28px; --tx: 0; }
+.tb-arrow--top-right { left: auto; right: 20px; bottom: auto; top: calc(var(--sa-t, 0px) + 8px); --tx: 0; --rot: 180deg; }
+.tb-arrow--top-share { left: 82%; bottom: auto; top: calc(var(--sa-t, 0px) + 8px); --rot: 180deg; }
+.tb-arrow .tb-i { width: 28px; height: 28px; }
+@keyframes tb-arrow { 0%, 100% { transform: translate(var(--tx), 0) rotate(var(--rot)); } 50% { transform: translate(var(--tx), 6px) rotate(var(--rot)); } }
+@media (prefers-reduced-motion: reduce) { .tb-arrow { animation: none; } }
+
+/* Альбом и низкие экраны: шапка, вкладки и баннер съедали две трети высоты — карточка
+   помещалась одна. Шапка ниже, баннер сбоя — одной строкой. */
+@media (max-height: 500px) and (orientation: landscape) {
+  .tb-head { padding: 6px 12px 4px; }
+  .tb-head h1 { font-size: 18px; line-height: 24px; }
+  .tb-mtabs { padding-bottom: 6px; }
+  .tb-outage .d { display: none; }
+  .tb-nav { height: calc(48px + var(--sa-b)); }
+}
+/* Широкий экран (альбом, планшет): карточки сессий — сеткой, а не одной длинной колонкой. */
+@media (min-width: 700px) {
+  .tb-scr > .tb-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); align-content: start; }
+}
+
+/* 020: модель в шапке — кнопка (сессия Shirabe), расход, отложенная сессия, «отправляется…». */
+.tb-model { display: inline-flex; align-items: center; gap: 2px; font: inherit; color: var(--accent\.text); padding: 0; background: none; border: 0; cursor: pointer; }
+.tb-model .tb-i { width: 12px; height: 12px; }
+.tb-cost { font-variant-numeric: tabular-nums; }
+.tb-chip--sched { background: var(--bg\.surface-2); color: var(--text\.secondary); }
+.tb-st--sched::before { inset: 2px; border-radius: 2px; background: var(--text\.secondary); }
+.tb-sched { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; padding: 8px 10px; border-radius: var(--radius\.md); background: var(--bg\.surface-2); font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); }
+.tb-sched .tb-btn { flex: none; }
+.tb-me.is-pending { opacity: 0.7; }
+.tb-me .pend { display: flex; align-items: center; justify-content: flex-end; gap: 4px; margin-top: 2px; }
+/* 021: «Авто» — решение хоста в листе запуска */
+.tb-auto { display: flex; flex-direction: column; gap: 6px; padding: 10px 12px; border-radius: var(--radius\.md); background: var(--bg\.surface-2); font: 400 13px/18px var(--font-ui); color: var(--text\.secondary); }
+.tb-auto.is-busy { flex-direction: row; align-items: center; gap: 8px; }
+.tb-auto .hd { font-weight: 500; }
+.tb-auto .pair { font: 600 15px/20px var(--font-ui); color: var(--text\.primary); }
+.tb-auto .steps { margin: 0; padding-left: 18px; }
+.tb-auto .choices { display: flex; flex-direction: column; gap: 4px; }
+.tb-auto .choices .tb-menu-r { min-height: 40px; padding: 0 10px; background: var(--bg\.surface); box-shadow: inset 0 0 0 1px var(--border\.default); color: var(--text\.primary); font-size: 14px; }
+.tb-auto .choices .tb-menu-r.is-on { box-shadow: inset 0 0 0 2px var(--accent\.default); color: var(--text\.primary); }
+.tb-auto > .tb-btn { align-self: flex-start; }
+.tb-sheet .help.err .tb-btn { flex: none; margin-left: auto; }
+/* 021: локальные модели */
+.tb-lm .ph { white-space: normal; font: 400 13px/18px var(--font-ui); }
+.tb-lm .nm { overflow-wrap: anywhere; }
+/* Подпись модели длинная: кнопки — второй строкой под текстом, а не в узкой колонке рядом. */
+.tb-lm--model { flex-wrap: wrap; row-gap: 8px; }
+.tb-lm--model .tb-sp { flex: 1 1 calc(100% - 36px); min-width: 0; }
+.tb-lm--model .acts { flex-basis: 100%; padding-left: 36px; }
+.tb-lm .acts { display: flex; gap: 6px; flex: none; }
+.tb-bar { height: 4px; margin-top: 6px; border-radius: 2px; background: var(--bg\.pressed); position: relative; overflow: hidden; }
+.tb-bar i { position: absolute; inset: 0 auto 0 0; width: var(--v, 0%); background: var(--accent\.default); border-radius: 2px; }
+.tb-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.tb-chips .tb-chip { background: var(--bg\.surface-2); color: var(--text\.primary); border: 0; cursor: pointer; }
+.tb-set-r.is-col .tb-btn--primary { align-self: stretch; justify-content: center; }
